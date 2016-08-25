@@ -1,60 +1,51 @@
-#!/usr/bin/env python
-#
-# Copyright 2007 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+
 import webapp2
 
-
 def validate_username(username):
-    if len(username) > 0:
+    if len(username) > 2:
         return username
 
 def validate_password(password):
-    if len(password):
+    if len(password) > 2:
         return password
 
-def validate_verify_password(password):
-    return password
+def validate_verify_password(password1, password2):
+        if password1 == password2:
+            return password2
 
 def validate_email(email):
-    return email
+    if len(email) > 0:
+        for char in email:
+            if char == "@":
+                if char == ".":
+                    return email
+    else:
+        return True
 
 
 form = """
 <form action="/welcome" method="post">
     <h1>Signup</h1>
     <label>Username:
-        <input name="username"/><div><font color="red">%(error_username)s</font></div>
+        <input name="username" value="%(username)s"/><font color="red">%(error_username)s</font>
     </label>
     <br>
     <br>
 
     <label>Password:
-        <input name="password"/><div><font color="red">%(error_password)s</font></div>
+        <input type="password" name="password"/><font color="red">%(error_password)s</font>
     </label>
     <br>
     <br>
 
     <label>Verify password:
-        <input name="verify_password"/><div><font color="red">%(error_verify_password)s</font></div>
+        <input type="password" name="verify_password"/><font color="red">%(error_verify_password)s</font>
     </label>
     <br>
     <br>
 
     <label>Email (optional):
-        <input name="email"/><div><font color="red">%(error_email)s</font></div>
+        <input name="email"/ value="%(email)s"><font color="red">%(error_email)s</font>
     </label>
     <br>
     <br>
@@ -69,8 +60,10 @@ form = """
 
 class MainHandler(webapp2.RequestHandler):
 
-    def write_form(self, error_username="", error_password="", error_verify_password="", error_email=""):
-        self.response.out.write(form % {"error_username": error_username,
+    def write_form(self, username="", email="", error_username="", error_password="", error_verify_password="", error_email=""):
+        self.response.out.write(form % {"username": username,
+                                        "email": email,
+                                        "error_username": error_username,
                                         "error_password": error_password,
                                         "error_verify_password": error_verify_password,
                                         "error_email": error_email})
@@ -79,28 +72,43 @@ class MainHandler(webapp2.RequestHandler):
         self.write_form()
 
 class Welcome_User(webapp2.RequestHandler):
-    def write_form(self, error_username="", error_password="", error_verify_password="", error_email=""):
-        self.response.out.write(form % {"error_username": error_username,
+
+    def write_form(self, username="", email="", error_username="", error_password="", error_verify_password="", error_email=""):
+        self.response.out.write(form % {"username": username,
+                                        "email": email,
+                                        "error_username": error_username,
                                         "error_password": error_password,
                                         "error_verify_password": error_verify_password,
                                         "error_email": error_email})
 
     def post(self):
+
+        user_username = self.request.get("username")
+        user_email = self.request.get("email")
+
         username = validate_username(self.request.get("username"))
         password = validate_password(self.request.get("password"))
-        verify_password = validate_verify_password(self.request.get("verify_password"))
+        verify_password = validate_verify_password(self.request.get("password"), self.request.get("verify_password"))
         email = validate_email(self.request.get("email"))
 
-        if not username:
-            self.write_form("That is not a valid username.")
+        if not (username and password):
+            if username:
+                self.write_form(user_username, user_email, "", "That is not a valid password.")
+            elif password:
+                self.write_form(user_username, user_email, "That is not a valid username.")
+            else:
+                self.write_form(user_username, user_email, "That is not a valid username.", "That is not a valid password.")
+        elif not username:
+            self.write_form(user_username, user_email, "That is not a valid username.")
         elif not password:
-            self.write_form("", "That is not a valid password.")
+            self.write_form(user_username, user_email, "", "That is not a valid password.")
         elif not verify_password:
-            self.write_form("", "", "Passwords are not the same.")
+            self.write_form(user_username, user_email, "", "", "Passwords are not the same.")
         elif not email:
-            self.write_form("", "", "", "That is not a valid email")
+            self.write_form(user_username, user_email, "", "", "", "That is not a valid email")
         else:
             self.response.out.write("Welcome, " + username + "!")
+
 
 
 
