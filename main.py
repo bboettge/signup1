@@ -1,26 +1,24 @@
 
 import webapp2
+import re
+
+USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+PASS_RE = re.compile(r"^.{3,20}$")
+EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
+
 
 def validate_username(username):
-    if len(username) > 2:
-        return username
+    return USER_RE.match(username)
 
 def validate_password(password):
-    if len(password) > 2:
-        return password
+    return PASS_RE.match(password)
 
 def validate_verify_password(password1, password2):
         if password1 == password2:
             return password2
 
 def validate_email(email):
-    if len(email) > 0:
-        for char in email:
-            if char == "@":
-                if char == ".":
-                    return email
-    else:
-        return True
+    return EMAIL_RE.match(email)
 
 
 form = """
@@ -107,7 +105,7 @@ class Welcome_User(webapp2.RequestHandler):
         elif not email:
             self.write_form(user_username, user_email, "", "", "", "That is not a valid email")
         else:
-            self.response.out.write("Welcome, " + username + "!")
+            self.response.out.write("Welcome, " + user_username + "!")
 
 
 
